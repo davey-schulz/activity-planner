@@ -9,6 +9,7 @@ module.exports = {
 		// 'vue/no-unused-vars': 'error'
 		'vue/singleline-html-element-content-newline': 0,
 		'vue/max-attributes-per-line': 0,
+		'vue/multiline-html-element-content-newline': 0,
 		'no-console': 'off',
 		'vue/html-self-closing': 'off'
 	}
