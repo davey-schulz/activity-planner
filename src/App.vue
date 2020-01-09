@@ -1,5 +1,5 @@
 <template>
-  <div id="ActivityApp">
+  <div v-if="isDataLoad" id="ActivityApp">
     <nav class="navbar is-white topNav">
       <div class="container">
         <div class="navbar-brand">
@@ -7,27 +7,29 @@
         </div>
       </div>
     </nav>
-    <nav class="navbar is-white">
-      <div class="container">
-        <div class="navbar-menu">
-          <div class="navbar-start">
-            <a class="navbar-item is-active" href="#">Newest</a>
-            <a class="navbar-item" href="#">In Progress</a>
-            <a class="navbar-item" href="#">Finished</a>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <TheNavBar />
     <section class="container">
       <div class="columns">
         <div class="column is-3">
-          <ActivityForm @activityCreated="addActivity" :categories="categories" />
+          <ActivityForm :categories="categories" @activityCreated="addActivity" />
         </div>
         <div class="column is-9">
-          <div class="box content">
-            <ActivityItem v-for="activity in activities" :key="activity.id" :activity="activity" />
-            <div class="activity-length">Currently {{ activityLength }} activities</div>
-            <div class="activity-motivation">{{ activityMotivation }}</div>
+          <div class="box content" :class="{ fetching: isFetching, 'has-error': error }">
+            <div v-if="error">{{ error }}</div>
+            <div v-else>
+              <div v-if="isFetching">Loading...</div>
+              <ActivityItem
+                v-for="activity in activities"
+                :key="activity.id"
+                :activity="activity"
+                :categories="categories"
+                @activityDeleted="handleActivityDelete"
+              />
+            </div>
+            <div v-if="!isFetching">
+              <div class="activity-length">Currently {{ activityLength }} activities</div>
+              <div class="activity-motivation">{{ activityMotivation }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -36,15 +38,23 @@
 </template>
 
 <script>
+import Vue from "vue";
 import ActivityItem from "@/components/ActivityItem";
 import ActivityForm from "@/components/ActivityForm";
-import { fetchActivities, fetchCategories, fetchUsers } from "@/api/index";
+import TheNavBar from "@/components/TheNavBar";
+import {
+  fetchActivities,
+  fetchCategories,
+  fetchUsers,
+  deleteActivityAPI
+} from "@/api/index";
 
 export default {
   name: "App",
   components: {
     ActivityItem,
-    ActivityForm
+    ActivityForm,
+    TheNavBar
   },
   data() {
     return {
@@ -53,10 +63,11 @@ export default {
       message: "Hello Vue!",
       titleMessage: "Title Message Vue!!!!!",
       isTextDisplayed: true,
-      items: { 1: { name: "Filip" }, 2: { name: "John" } },
+      isFetching: false,
+      error: false,
       user: {},
-      activities: {},
-      categories: {}
+      activities: null,
+      categories: null
     };
   },
   computed: {
@@ -76,19 +87,42 @@ export default {
       } else {
         return "No activities... So sad..";
       }
+    },
+    isDataLoad() {
+      return this.activities && this.categories;
     }
   },
   created() {
-    this.activities = fetchActivities();
-    this.categories = fetchCategories();
+    this.isFetching = true;
+    fetchActivities()
+      .then(activities => {
+        this.activities = activities;
+        this.isFetching = false;
+      })
+      .catch(error => {
+        this.error = error;
+        this.isFetching = false;
+      });
+
     this.user = fetchUsers();
 
-    console.log(this.user);
-    console.log(this.categories);
+    fetchCategories().then(categories => {
+      this.categories = categories;
+    });
+
+    // console.log(this.user);
+    // console.log(this.categories);
   },
   methods: {
     addActivity(newActivity) {
+      // this.activities[newActivity.id] = newActivity;
+      Vue.set(this.activities, newActivity.id, newActivity);
       console.log(newActivity);
+    },
+    handleActivityDelete(activity) {
+      deleteActivityAPI(activity).then(deletedActivity => {
+        Vue.delete(this.activities, deletedActivity.id);
+      });
     }
   }
 };
@@ -103,6 +137,14 @@ body {
 
 footer {
   background-color: #f2f6fa !important;
+}
+
+.fetching {
+  border: 2px solid orange;
+}
+
+.has-error {
+  border: 2px solid red;
 }
 
 .activity-motivation {

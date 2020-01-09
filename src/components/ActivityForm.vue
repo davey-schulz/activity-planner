@@ -26,11 +26,15 @@
           </div>
         </div>
         <div class="field">
-          <label class="label">Notes</label>
+          <label class="label">Category</label>
           <div class="control">
             <select v-model="newActivity.category" class="select">
               <option disabled value>Please Select One</option>
-              <option v-for="category in categories" :key="category.id">{{category.text}}</option>
+              <option
+                v-for="category in categories"
+                :key="category.id"
+                :value="category.id"
+              >{{ category.text }}</option>
             </select>
           </div>
         </div>
@@ -52,9 +56,15 @@
 </template>
 
 <script>
-import { createActivity } from "@/api/index";
+import { createActivityAPI } from "@/api/index";
 import { create } from "domain";
 export default {
+  props: {
+    categories: {
+      type: Object,
+      required: true
+    }
+  },
   data() {
     return {
       isFormDisplayed: false,
@@ -65,24 +75,32 @@ export default {
       }
     };
   },
-  props: {
-    categories: {
-      type: Object,
-      required: true
-    }
-  },
   computed: {
     isFormValid() {
-      return this.newActivity.title && this.newActivity.notes;
+      return (
+        this.newActivity.title &&
+        this.newActivity.notes &&
+        this.newActivity.category
+      );
     }
   },
   methods: {
     toggleFormDisplay() {
       this.isFormDisplayed = !this.isFormDisplayed;
     },
+    resetForm() {
+      this.newActivity.title = "";
+      this.newActivity.notes = "";
+      this.newActivity.category = "";
+
+      this.isFormDisplayed = false;
+    },
     createActivity() {
-      const activity = createActivity(this.newActivity);
-      this.$emit("activityCreated", { ...activity });
+      createActivityAPI({ ...this.newActivity }).then(activity => {
+        this.resetForm();
+
+        this.$emit("activityCreated", { ...activity });
+      });
     }
   }
 };
