@@ -29,7 +29,7 @@
       </div>
     </div>
     <div v-if="isMenuDisplayed" class="activity-controll">
-      <a class="button is-warning">Edit</a>
+      <a class="button is-warning" @click="$emit('toggleUpdate', true)">Edit</a>
       <a class="button is-danger" @click="deleteActivity">Delete</a>
     </div>
   </article>

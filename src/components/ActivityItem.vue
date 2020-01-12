@@ -1,7 +1,17 @@
 <template>
   <div>
-    <ActivityItemUpdate v-if="isUpdateActive" />
-    <ActivityItemDetail v-else :activity="activity" :categories="categories" />
+    <ActivityItemUpdate
+      v-if="isUpdateActive"
+      :activity="activity"
+      :categories="categories"
+      @toggleUpdate="changeUpdateState"
+    />
+    <ActivityItemDetail
+      v-else
+      :activity="activity"
+      :categories="categories"
+      @toggleUpdate="changeUpdateState"
+    />
   </div>
 </template>
 
@@ -27,6 +37,11 @@ export default {
     return {
       isUpdateActive: false
     };
+  },
+  methods: {
+    changeUpdateState(isUpdate) {
+      this.isUpdateActive = isUpdate;
+    }
   }
 };
 </script>
